@@ -206,7 +206,7 @@ class EC2stash(object):
         #  ssm.delete_parameter does not return nothing
         return (result["ResponseMetadata"]["HTTPStatusCode"] == 200)
 
-    def put_parameter(self, secret, value, overwrite, salt):
+    def put_parameter(self, secret, value, stype, overwrite, salt):
         try:
             if salt:
                 kms = self.get_client('kms')
@@ -218,13 +218,21 @@ class EC2stash(object):
             else:
                 final_value = str(value)
 
-            result = self.ssm.put_parameter(
-                Name=str(secret),
-                Description=str(secret),
-                Value=final_value,
-                Type='SecureString',
-                KeyId=self.cfg["kms"],
-                Overwrite=overwrite, )
+            if stype == "SecureString":
+                result = self.ssm.put_parameter(
+                    Name=str(secret),
+                    Description=str(secret),
+                    Value=final_value,
+                    Type=stype,
+                    KeyId=self.cfg["kms"],
+                    Overwrite=overwrite, )
+            else:
+                result = self.ssm.put_parameter(
+                    Name=str(secret),
+                    Description=str(secret),
+                    Value=final_value,
+                    Type=stype,
+                    Overwrite=overwrite, )
         except:
             logger.error(sys.exc_info()[1])
             sys.exit(1)

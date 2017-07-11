@@ -37,6 +37,7 @@ def catch_exceptions(func):
 
 
 @click.group()
+@click.version_option(prog_name="ec2stash")
 @click.pass_context
 @click.option(
     "--iam", default=os.environ.get("AWS_SSM_ROLE", ""), help="IAM to assume")
@@ -174,11 +175,14 @@ def delete(ctx, secret):
 @click.argument('secret')
 @click.argument('value')
 @click.option('--overwrite/--no-overwrite', default=True)
+@click.option(
+    "--stype", type=click.Choice(["String", "StringList", "SecureString"]), default="SecureString",
+    help="String Type default:SecureString")
 @click.option('--salt/--no-salt', default=False)
 @click.pass_context
 @catch_exceptions
-def put(ctx, secret, value, overwrite, salt):
-    if EC2stash(ctx.obj).put_parameter(secret, value, overwrite, salt):
+def put(ctx, secret, value, stype, overwrite, salt):
+    if EC2stash(ctx.obj).put_parameter(secret, value, stype, overwrite, salt):
         logger.info("secret {} saved".format(secret))
     else:
         logger.error("secret {} NOT saved".format(secret))

@@ -25,7 +25,6 @@ dist: clean
 
 pip: dist
 	twine upload dist/*	
-	clean	
 
 install: clean
 	python setup.py install
