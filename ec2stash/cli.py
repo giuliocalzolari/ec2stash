@@ -176,7 +176,9 @@ def delete(ctx, secret):
 @click.argument('value')
 @click.option('--overwrite/--no-overwrite', default=True)
 @click.option(
-    "--stype", type=click.Choice(["String", "StringList", "SecureString"]), default="SecureString",
+    "--stype",
+    type=click.Choice(["String", "StringList", "SecureString"]),
+    default="SecureString",
     help="String Type default:SecureString")
 @click.option('--salt/--no-salt', default=False)
 @click.pass_context

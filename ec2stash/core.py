@@ -6,8 +6,6 @@ import base64
 import boto3
 import botocore
 
-
-
 logger = logging.getLogger("ec2stash")
 
 
@@ -24,7 +22,7 @@ class EC2stash(object):
         """Init class
 
         Args:
-            args (object): Description
+            args (object): CFG
         """
         self.cfg = cfg
         self.credentials = {}
@@ -62,6 +60,15 @@ class EC2stash(object):
             aws_session_token=self.credentials["SessionToken"])
 
     def extract(self, items, search="Name"):
+        """Get Parameter Name
+        
+        Args:
+            items (list): Parameters List
+            search (str, optional): Key to search default: Name
+        
+        Returns:
+            list: Parameters List
+        """
         result = []
         for key in items:
             for val, val2 in key.items():
@@ -102,6 +109,11 @@ class EC2stash(object):
         return tags
 
     def setup(self):
+        """ec2stash setup, creation of dedicated KMS Key
+        
+        Returns:
+            Bool: Creation of the dedicated Key
+        """
         try:
             logger.info("Creating KMS Key: {}".format(self.cfg["kms"]))
             kms = self.get_client('kms')
@@ -123,6 +135,13 @@ class EC2stash(object):
             sys.exit(1)
 
     def erase(self):
+        """ec2stash deletion of dedicated KMS Key
+        the Key will Schedule for deletion
+
+        
+        Returns:
+            Bool: deletion of the dedicated Key
+        """
         try:
             logger.info("Deleting KMS Key: {}".format(self.cfg["kms"]))
             kms = self.get_client('kms')
@@ -142,6 +161,13 @@ class EC2stash(object):
             sys.exit(1)
 
     def blockerase(self):
+        """ec2stash cancel the deletion of dedicated KMS Key
+        will Cancel the Schedule deletion
+
+        
+        Returns:
+            Bool: result
+        """
         try:
             logger.info("Restoring KMS Key: {}".format(self.cfg["kms"]))
             kms = self.get_client('kms')
@@ -162,6 +188,11 @@ class EC2stash(object):
             sys.exit(1)
 
     def describe_parameters(self):
+        """List of all parameters
+        
+        Returns:
+            list: list of parameters
+        """
         try:
             pms = self.ssm.describe_parameters(Filters=[{
                 'Key':
@@ -174,6 +205,15 @@ class EC2stash(object):
         return self.extract(pms)
 
     def get_parameter(self, parm, autosalt=True):
+        """retrieve the content of a parameter store
+        
+        Args:
+            parm (string): secret name
+            autosalt (bool, optional): double encryption of the secret
+        
+        Returns:
+            string: secret in Plaintext
+        """
         try:
             secret = self.ssm.get_parameter(
                 Name=parm, WithDecryption=True)["Parameter"]["Value"]
@@ -194,6 +234,14 @@ class EC2stash(object):
             sys.exit(1)
 
     def delete_parameter(self, secret):
+        """deletion of a parameter store
+        
+        Args:
+            secret (string): secret to delete
+        
+        Returns:
+            bool: result
+        """
         if secret in self.describe_parameters():
             try:
                 result = self.ssm.delete_parameter(Name=str(secret))
@@ -207,6 +255,18 @@ class EC2stash(object):
         return (result["ResponseMetadata"]["HTTPStatusCode"] == 200)
 
     def put_parameter(self, secret, value, stype, overwrite, salt):
+        """Creation of a parameter
+        
+        Args:
+            secret (string): secret Key
+            value (string): secret Value
+            stype (string): key of Secret 'String'|'StringList'|'SecureString'
+            overwrite (bool): overwrite existing parameter
+            salt (bool): double encryption of the secret
+        
+        Returns:
+            bool: result
+        """
         try:
             if salt:
                 kms = self.get_client('kms')
@@ -239,6 +299,16 @@ class EC2stash(object):
         return (result["ResponseMetadata"]["HTTPStatusCode"] == 200)
 
     def tag_parameter(self, secret, value, purge):
+        """Tag Parameter
+        
+        Args:
+            secret (string): Parameter Name
+            value (string): Tag to add ex: Name=demo,Env=prod
+            purge (bool): delete all other tags
+        
+        Returns:
+            bool: result
+        """
         if purge:
             tag_list = self.ssm.list_tags_for_resource(
                 ResourceType='Parameter', ResourceId=secret)["TagList"]
@@ -255,6 +325,14 @@ class EC2stash(object):
         return (result["ResponseMetadata"]["HTTPStatusCode"] == 200)
 
     def get_tag_parameter(self, secret):
+        """Get tags from parameter
+        
+        Args:
+            secret (string): Parameter Name
+        
+        Returns:
+            string: Tag of the secret
+        """
         try:
             tag_list = self.ssm.list_tags_for_resource(
                 ResourceType='Parameter', ResourceId=secret)["TagList"]
