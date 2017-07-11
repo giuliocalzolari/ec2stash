@@ -26,10 +26,10 @@ setup(
     version=version,
     description="EC2 stash using AWS Parameters Store",
     long_description=readme,
-    author="giuliocalzo",
+    author="giuliocalzolari",
     author_email="gc@hide.me",
     license='MIT',
-    url="https://github.com/giuliocalzo/ec2stash",
+    url="https://github.com/giuliocalzolari/ec2stash",
     packages=[
         "ec2stash"
     ],
